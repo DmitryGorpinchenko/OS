@@ -2,19 +2,17 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-struct Memory;
 struct Proc;
+struct Memory;
 
-struct Memory *init_mem();
+struct Proc   *init_proc(uint64_t pt_addr); 
+struct Memory *init_mem(void);
+
+uint64_t movq(struct Memory *mem, uint64_t addr);
+uint64_t translate(struct Proc *proc, struct Memory *mem, uint64_t logic_addr);
+
 void free_mem(struct Memory *mem);
 void fill_mem(struct Memory *mem, FILE *data, int m);
-uint64_t movq(struct Memory *mem, uint64_t addr);
-
-struct Proc *init_proc(uint64_t pt_addr); 
-
-uint64_t translate(struct Proc   *proc, 
-		   struct Memory *mem, 
-		   uint64_t      logic_addr);
 
 #define FAULT 0xFFFFFFFFFFFFFFFFLU
 
@@ -96,8 +94,8 @@ struct Proc {
 };
 
 uint64_t translate(struct Proc   *proc, 
-	           struct Memory *mem, 
-	           uint64_t      logic_addr)
+                   struct Memory *mem, 
+                   uint64_t      logic_addr)
 {	
 	int offset  = logic_addr & OFFSET_MASK;
 	
@@ -141,11 +139,9 @@ uint64_t movq(struct Memory *mem, uint64_t addr)
 		if (curr == NULL) {
 			return 0x0UL;
 		}
-		
 		if (curr->addr == addr) {
 			break;
 		}
-		
 		curr = curr->next;
 	} while (1);
 	
@@ -160,13 +156,12 @@ struct Proc *init_proc(uint64_t pt_addr)
 	if (proc == NULL) {
 		return NULL;
 	}
-	
 	proc->pt_addr = pt_addr;
 	
 	return proc;
 }
 
-struct Memory *init_mem()
+struct Memory *init_mem(void)
 {
 	struct Memory *mem = NULL;
 	mem = malloc(sizeof(struct Memory));
@@ -180,7 +175,6 @@ struct Memory *init_mem()
 	for ( ; i < BUCKETS_NUM; i++) {
 		mem->qwords[i] = NULL;
 	}
-
 	return mem;
 }
 
@@ -193,15 +187,11 @@ void free_mem(struct Memory *mem)
 	
 		while (curr != NULL) {
 			struct QWord *tmp = curr->next;
-			
 			free(curr);	
-			
 			curr = tmp;
 		}
-	
 		mem->qwords[i] = NULL;
-	}
-	
+	}	
 	free(mem);	
 }
 
@@ -215,7 +205,6 @@ void fill_mem(struct Memory *mem, FILE *data, int m)
 		fscanf(data, "%lu %lu", &qw->addr, &qw->val);
 		
 		qw->next = mem->qwords[qw->addr % BUCKETS_NUM];
-		
 		mem->qwords[qw->addr % BUCKETS_NUM] = qw;
 	}
 }

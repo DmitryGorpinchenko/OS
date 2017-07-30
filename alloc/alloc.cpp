@@ -9,7 +9,7 @@ public:
 	{}	
 	
 	void Init(void *buf, size_t size) {
-		mem_= static_cast<char*>(buf);
+		mem_= (char *) buf;
 		mem_size = size;
 		
 		Tag *head = (Tag *) (mem_);
@@ -33,8 +33,7 @@ private:
 		{}
 		
 		int size() {
-			return (int) raw_size 
-			     - (int) (2 * sizeof(Tag));
+			return (int) raw_size - (int) (2 * sizeof(Tag));
 		}
 	};
 
@@ -59,7 +58,6 @@ void *SmallAllocator::Alloc(size_t size)
 		}
 		
 		head->occupied = 1;
-		
 		size_t new_raw_size = size + 2 * sizeof(Tag); 
 		
 		if (head->size() > new_raw_size) {
@@ -68,17 +66,13 @@ void *SmallAllocator::Alloc(size_t size)
 			
 			head->raw_size = new_raw_size;
 			*new_tail = Tag(new_raw_size, 1);
-			
 			*new_head = Tag(tail->raw_size - new_raw_size, 0);
 			tail->raw_size = tail->raw_size - new_raw_size;
 		} else {
 			tail->occupied = 1;
 		}
-		
 		return ptr + sizeof(Tag);
-		
 	} while (ptr < end); 
-	
 	return NULL;
 }
 
@@ -96,7 +90,6 @@ void SmallAllocator::Free(void *ptr)
 		head = (Tag *) ((char *) head - (head - 1)->raw_size);
 		raw_size += head->raw_size;	
 	}
-	
 	if ((char *) (tail + 1) < end && (tail + 1)->occupied == 0) {
 		tail = (Tag *) ((char *) tail + (tail + 1)->raw_size);
 		raw_size += tail->raw_size;
